@@ -26,12 +26,8 @@ public class Avaliacao {
     @Column(name = "email_cliente")
     private String emailCliente;
 
-    @Column(name = "processada")
-    private Boolean processada = false;
-
     public Avaliacao() {
         this.dataAvaliacao = LocalDateTime.now();
-        this.processada = false;
     }
 
     public Avaliacao(String restaurante, Integer nota, String comentario, String emailCliente) {
@@ -40,7 +36,6 @@ public class Avaliacao {
         this.comentario = comentario;
         this.emailCliente = emailCliente;
         this.dataAvaliacao = LocalDateTime.now();
-        this.processada = false;
     }
 
     // Getters and Setters
@@ -92,26 +87,8 @@ public class Avaliacao {
         this.emailCliente = emailCliente;
     }
 
-    public Boolean getProcessada() {
-        return processada;
-    }
-
-    public void setProcessada(Boolean processada) {
-        this.processada = processada;
-    }
-
     public boolean isUrgente() {
         return nota != null && nota <= 2;
-    }
-
-    @PrePersist
-    public void prePersist() {
-        if (this.dataAvaliacao == null) {
-            this.dataAvaliacao = LocalDateTime.now();
-        }
-        if (this.processada == null) {
-            this.processada = false;
-        }
     }
 }
 
