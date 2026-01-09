@@ -122,6 +122,44 @@
 
 
 // ===================================================================
+// 3. LAMBDA: GerarRelatorioHandler (feedback-system-gerar-relatorio)
+// ===================================================================
+
+// Teste 1: Evento do EventBridge (CloudWatch Events) - Agendamento Semanal
+{
+  "id": "cdc73f9d-aea9-11e3-9d5a-835b769c0d9c",
+  "detail-type": "Scheduled Event",
+  "source": "aws.events",
+  "account": "123456789012",
+  "time": "2026-01-08T10:00:00Z",
+  "region": "us-east-2",
+  "resources": [
+    "arn:aws:events:us-east-2:123456789012:rule/weekly-report-rule"
+  ],
+  "detail": {}
+}
+
+// Teste 2: Invocação Manual (sem evento - objeto vazio)
+{
+}
+
+// Teste 3: Teste Completo com informações detalhadas
+{
+  "id": "test-manual-invoke-001",
+  "detail-type": "Manual Test",
+  "source": "manual.test",
+  "account": "123456789012",
+  "time": "2026-01-08T14:30:00Z",
+  "region": "us-east-2",
+  "resources": [],
+  "detail": {
+    "test": true,
+    "description": "Teste manual do relatório semanal"
+  }
+}
+
+
+// ===================================================================
 // GUIA DE USO:
 // ===================================================================
 //
@@ -133,6 +171,11 @@
 // - Use o teste 1 para mensagem única
 // - Use o teste 2 para simular processamento em batch
 // - Use o teste 3 para testar comportamento sem mensagens
+//
+// PARA LAMBDA 3 (GerarRelatorioHandler):
+// - Use o teste 1 para simular agendamento do EventBridge
+// - Use o teste 2 para invocação manual simples
+// - Use o teste 3 para teste detalhado
 //
 // RESPOSTAS ESPERADAS:
 //
@@ -150,5 +193,37 @@
 //   "erros": 0,
 //   "message": "Processadas 1 mensagens com 0 erros"
 // }
+//
+// Lambda 3 (sucesso):
+// {
+//   "statusCode": 200,
+//   "body": "{\"periodo\":\"01/01/2026 a 08/01/2026\",\"totalAvaliacoes\":45,\"mediaNotas\":3.87,\"avaliacoesPorRestaurante\":{...},\"comentariosNegativos\":[...]}",
+//   "message": "Relatório gerado e enviado com sucesso"
+// }
+//
+// IMPORTANTE - CONFIGURAÇÃO DO SES:
+// ===================================================================
+// Antes de testar a Lambda 3 (GerarRelatorioHandler), você DEVE:
+//
+// 1. Acessar o console do Amazon SES
+// 2. Ir em "Verified identities"
+// 3. Verificar os seguintes emails:
+//    - Email do remetente (variável SES_FROM_EMAIL)
+//    - Email(s) do(s) destinatário(s) (variável SES_ADMIN_EMAILS)
+//
+// 4. Para verificar um email:
+//    - Clique em "Create identity"
+//    - Selecione "Email address"
+//    - Digite o email e clique em "Create identity"
+//    - Acesse o email e clique no link de verificação
+//
+// 5. Se estiver no SANDBOX mode:
+//    - Você só pode enviar emails para endereços verificados
+//    - Para produção, solicite "Request production access"
+//
+// 6. Configurar as variáveis de ambiente na Lambda:
+//    SES_FROM_EMAIL=noreply@seu-dominio.com
+//    SES_ADMIN_EMAILS=admin@seu-dominio.com,gerente@seu-dominio.com
+//
 // ===================================================================
 

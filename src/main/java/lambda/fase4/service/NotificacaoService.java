@@ -26,10 +26,10 @@ public class NotificacaoService {
     @Inject
     Gson gson;
 
-    @ConfigProperty(name = "aws.sqs.queue.notificacao.url")
+    @ConfigProperty(name = "quarkus.sqs.queue.notificacao.url")
     String sqsQueueUrl;
 
-    @ConfigProperty(name = "aws.sns.topic.urgencia.arn")
+    @ConfigProperty(name = "quarkus.sns.topic.urgencia.arn")
     String snsTopicArn;
 
     public void enviarNotificacaoUrgencia(Avaliacao avaliacao) {

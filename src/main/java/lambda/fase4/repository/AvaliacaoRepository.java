@@ -7,35 +7,46 @@ import lambda.fase4.model.Avaliacao;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Repositório Panache para operações de banco de dados com Avaliações
+ * Panache simplifica o uso de JPA eliminando muito código boilerplate
+ */
 @ApplicationScoped
 public class AvaliacaoRepository implements PanacheRepository<Avaliacao> {
 
+    /**
+     * Busca avaliações por restaurante
+     */
     public List<Avaliacao> findByRestaurante(String restaurante) {
         return list("restaurante", restaurante);
     }
 
-    public List<Avaliacao> findByNota(Integer nota) {
-        return list("nota", nota);
-    }
-
+    /**
+     * Busca avaliações urgentes (nota baixa) não processadas
+     */
     public List<Avaliacao> findAvaliacoesUrgentes() {
         return list("nota <= ?1", 2);
     }
 
+    /**
+     * Busca avaliações por nota
+     */
+    public List<Avaliacao> findByNota(Integer nota) {
+        return list("nota", nota);
+    }
+
+    /**
+     * Busca avaliações por período
+     */
     public List<Avaliacao> findByPeriodo(LocalDateTime inicio, LocalDateTime fim) {
-        return list("dataAvaliacao between ?1 and ?2", inicio, fim);
+        return list("dataAvaliacao >= ?1 and dataAvaliacao <= ?2", inicio, fim);
     }
 
-    public Double getMediaNotas(LocalDateTime inicio, LocalDateTime fim) {
-        return find("SELECT AVG(a.nota) FROM Avaliacao a WHERE a.dataAvaliacao BETWEEN ?1 AND ?2",
-                   inicio, fim)
-               .project(Double.class)
-               .firstResult();
-    }
-
-    public Long countByRestaurante(String restaurante, LocalDateTime inicio, LocalDateTime fim) {
-        return count("restaurante = ?1 and dataAvaliacao between ?2 and ?3",
-                    restaurante, inicio, fim);
+    /**
+     * Marca uma avaliação como processada
+     */
+    public void marcarComoProcessada(Long id) {
+        update("processada = true where id = ?1", id);
     }
 }
 

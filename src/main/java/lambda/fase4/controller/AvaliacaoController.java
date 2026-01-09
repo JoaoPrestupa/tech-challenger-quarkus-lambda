@@ -11,6 +11,10 @@ import org.jboss.logging.Logger;
 
 import java.util.List;
 
+/**
+ * Controller REST para testes locais
+ * Em produção, as Lambdas serão invocadas diretamente via API Gateway
+ */
 @Path("/api/avaliacoes")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)

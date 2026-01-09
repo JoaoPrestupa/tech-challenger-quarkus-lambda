@@ -12,7 +12,10 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-
+/**
+ * Lambda Function 3: Processar notificações urgentes da fila SQS
+ * Esta função é invocada automaticamente quando uma mensagem é adicionada à fila SQS
+ */
 public class EnviarNotificacaoHandler implements RequestHandler<SQSEvent, Map<String, Object>> {
 
     private final Gson gson;
@@ -28,16 +31,6 @@ public class EnviarNotificacaoHandler implements RequestHandler<SQSEvent, Map<St
         Map<String, Object> response = new HashMap<>();
         int processadas = 0;
         int erros = 0;
-
-        // Verifica se o evento tem records antes de processar
-        if (event == null || event.getRecords() == null || event.getRecords().isEmpty()) {
-            context.getLogger().log("Nenhuma mensagem para processar");
-            response.put("statusCode", 200);
-            response.put("message", "Nenhuma mensagem para processar");
-            response.put("processadas", 0);
-            response.put("erros", 0);
-            return response;
-        }
 
         for (SQSEvent.SQSMessage message : event.getRecords()) {
             try {
