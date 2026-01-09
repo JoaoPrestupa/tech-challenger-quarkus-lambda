@@ -1,0 +1,6 @@
+#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
+#Mon Dec 15 15:36:39 BRT 2025
+postgresql-42.7.8.jar>central=
+postgresql-42.7.8-javadoc.jar>central=
+postgresql-42.7.8-sources.jar>central=
+postgresql-42.7.8.pom>central=

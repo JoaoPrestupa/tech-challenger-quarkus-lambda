@@ -1,0 +1,310 @@
+# Feedback System - Quarkus AWS Lambda
+
+Sistema de gerenciamento de feedback de restaurantes usando Quarkus e AWS Lambda.
+
+## 🚀 Funcionalidades
+
+### Lambda Functions
+
+1. **ReceberFeedbackFunction** - Recebe e processa feedback de clientes
+   - Trigger: API Gateway (HTTP POST)
+   - Salva avaliações no PostgreSQL
+   - Envia notificações urgentes para SQS (notas ≤ 2)
+   - Registra métricas no CloudWatch
+
+2. **GerarRelatorioFunction** - Gera relatório semanal automaticamente
+   - Trigger: EventBridge Schedule (toda segunda-feira às 9h)
+   - Analisa avaliações da semana
+   - Publica relatório via SNS
+
+3. **EnviarNotificacaoFunction** - Processa notificações urgentes
+   - Trigger: SQS Queue
+   - Envia alertas via SNS para administradores
+
+## 📋 Pré-requisitos
+
+- Java 21
+- Maven 3.9+
+- AWS CLI configurado
+- AWS SAM CLI
+- Docker (para testes locais)
+- PostgreSQL (para desenvolvimento local)
+
+## 🏗️ Arquitetura
+
+```
+Cliente → API Gateway → Lambda (ReceberFeedback) → PostgreSQL
+                              ↓
+                            SQS Queue → Lambda (EnviarNotificacao) → SNS
+                              ↓
+                          CloudWatch
+                          
+EventBridge Schedule → Lambda (GerarRelatorio) → SNS
+                              ↓
+                          PostgreSQL
+```
+
+## 🛠️ Configuração
+
+### 1. Configurar variáveis de ambiente
+
+Edite `src/main/resources/application.properties`:
+
+```properties
+# Database
+DB_HOST=your-rds-endpoint
+DB_PORT=5432
+DB_NAME=feedback_db
+DB_USERNAME=postgres
+DB_PASSWORD=your-password
+
+# AWS Services
+SQS_NOTIFICACAO_URL=your-sqs-url
+SNS_URGENCIA_ARN=your-sns-arn
+SES_FROM_EMAIL=your-email@domain.com
+SES_ADMIN_EMAILS=admin@domain.com
+```
+
+### 2. Build do projeto
+
+```bash
+# Build para Lambda
+mvnw clean package -Pnative -Dquarkus.package.type=native-sources
+
+# Ou build JVM (mais rápido, porém maior)
+mvnw clean package
+```
+
+### 3. Deploy para AWS
+
+```bash
+# Deploy com SAM
+sam build
+sam deploy --guided
+
+# Ou deploy manual com AWS CLI
+aws lambda create-function \
+  --function-name ReceberFeedbackFunction \
+  --runtime java21 \
+  --handler io.quarkus.amazon.lambda.runtime.QuarkusStreamHandler::handleRequest \
+  --zip-file fileb://target/function.zip \
+  --role arn:aws:iam::ACCOUNT_ID:role/lambda-execution-role
+```
+
+## 🧪 Testes
+
+### Teste Local (modo desenvolvimento)
+
+```bash
+# Iniciar em modo dev
+mvnw quarkus:dev
+
+# Testar endpoint REST
+curl -X POST http://localhost:8080/api/avaliacoes \
+  -H "Content-Type: application/json" \
+  -d '{
+    "restaurante": "Pizzaria Roma",
+    "nota": 1,
+    "comentario": "Péssimo atendimento",
+    "emailCliente": "cliente@email.com"
+  }'
+```
+
+### Teste de Lambda Local
+
+```bash
+# Usando SAM Local
+sam local invoke ReceberFeedbackFunction -e events/feedback-event.json
+
+# Usando Quarkus Lambda Local
+mvnw quarkus:dev -Dquarkus.lambda.enable-polling-jvm-mode=true
+```
+
+### Criar arquivo de evento de teste
+
+`events/feedback-event.json`:
+```json
+{
+  "body": "{\"restaurante\":\"Pizzaria Roma\",\"nota\":1,\"comentario\":\"Péssimo atendimento\",\"emailCliente\":\"cliente@email.com\"}",
+  "headers": {
+    "Content-Type": "application/json"
+  }
+}
+```
+
+## 📊 Estrutura do Projeto
+
+```
+src/
+├── main/
+│   ├── java/lambda/fase4/
+│   │   ├── config/          # Configurações (Gson, AWS)
+│   │   ├── controller/      # REST Controllers (testes)
+│   │   ├── dto/             # Data Transfer Objects
+│   │   ├── lambda/          # Lambda Handlers
+│   │   │   ├── ReceberFeedbackHandler.java
+│   │   │   ├── GerarRelatorioHandler.java
+│   │   │   └── EnviarNotificacaoHandler.java
+│   │   ├── model/           # Entidades JPA
+│   │   ├── repository/      # Repositórios Panache
+│   │   └── service/         # Lógica de negócio
+│   └── resources/
+│       └── application.properties
+├── docker/                   # Dockerfiles
+└── template.yaml            # SAM Template
+```
+
+## 🔐 Permissões IAM Necessárias
+
+A Lambda precisa de uma role com as seguintes políticas:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "arn:aws:logs:*:*:*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "sqs:SendMessage",
+        "sqs:ReceiveMessage",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes"
+      ],
+      "Resource": "arn:aws:sqs:*:*:notificacao-urgencia-queue"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "sns:Publish"
+      ],
+      "Resource": "arn:aws:sns:*:*:urgencia-topic"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "cloudwatch:PutMetricData"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ses:SendEmail"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+## 📝 Exemplo de Uso
+
+### 1. Enviar Feedback (Lambda 1)
+
+```bash
+curl -X POST https://your-api-gateway-url/feedback \
+  -H "Content-Type: application/json" \
+  -d '{
+    "restaurante": "Restaurante XYZ",
+    "nota": 5,
+    "comentario": "Excelente!",
+    "emailCliente": "cliente@email.com"
+  }'
+```
+
+Resposta:
+```json
+{
+  "id": 123,
+  "restaurante": "Restaurante XYZ",
+  "nota": 5,
+  "comentario": "Excelente!",
+  "dataAvaliacao": "2025-12-09T20:00:00",
+  "emailCliente": "cliente@email.com"
+}
+```
+
+### 2. Relatório Semanal (Lambda 2)
+
+Executada automaticamente toda segunda-feira às 9h, ou manualmente:
+
+```bash
+aws lambda invoke \
+  --function-name GerarRelatorioFunction \
+  response.json
+```
+
+### 3. Notificação Urgente (Lambda 3)
+
+Processada automaticamente quando uma avaliação com nota ≤ 2 é registrada.
+
+## 🔧 Troubleshooting
+
+### Erro de conexão com banco de dados
+
+Certifique-se de que:
+- A Lambda está em uma VPC com acesso ao RDS
+- Os security groups permitem conexão na porta 5432
+- As credenciais estão corretas
+
+### Lambda timeout
+
+Aumente o timeout na configuração:
+```yaml
+Timeout: 60  # segundos
+```
+
+### Cold start muito lento
+
+Considere usar:
+- Provisioned Concurrency
+- SnapStart (Java 11+)
+- Native compilation com GraalVM
+
+## 📈 Monitoramento
+
+### CloudWatch Metrics
+
+- `FeedbackSystem/AvaliacoesRecebidas` - Total de avaliações
+- `FeedbackSystem/NotaAvaliacao` - Distribuição de notas
+
+### CloudWatch Logs
+
+Logs disponíveis em:
+- `/aws/lambda/ReceberFeedbackFunction`
+- `/aws/lambda/GerarRelatorioFunction`
+- `/aws/lambda/EnviarNotificacaoFunction`
+
+## 🔄 Migração do Spring Boot
+
+### Principais mudanças:
+
+| Spring Boot | Quarkus |
+|-------------|---------|
+| `@SpringBootApplication` | Removido (não necessário) |
+| `@Service` | `@ApplicationScoped` |
+| `@Repository` | `PanacheRepository` |
+| `@RestController` | `@Path` + JAX-RS |
+| `application.properties` | `application.properties` (sintaxe diferente) |
+| Spring Data JPA | Hibernate ORM + Panache |
+| AWS SDK v2 (manual) | Quarkus Amazon Services |
+
+## 📚 Recursos
+
+- [Quarkus Documentation](https://quarkus.io/guides/)
+- [Quarkus Lambda](https://quarkus.io/guides/amazon-lambda)
+- [AWS SAM Documentation](https://docs.aws.amazon.com/serverless-application-model/)
+
+## 📄 Licença
+
+Este projeto é parte do Tech Challenge 4 - FIAP
+

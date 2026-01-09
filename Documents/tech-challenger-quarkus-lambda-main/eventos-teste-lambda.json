@@ -1,0 +1,229 @@
+// ===================================================================
+// JSONs DE TESTE PARA AS LAMBDAS
+// ===================================================================
+
+// ===================================================================
+// 1. LAMBDA: ReceberFeedbackHandler (feedback-system-receber-feedback-fiap)
+// ===================================================================
+
+// Teste 1: Feedback NORMAL (nota > 2) - Simulando API Gateway
+{
+  "body": "{\"restaurante\":\"Pizzaria Bella\",\"nota\":4,\"comentario\":\"Ótima pizza, bem recheada!\",\"emailCliente\":\"cliente@email.com\"}",
+  "httpMethod": "POST",
+  "headers": {
+    "Content-Type": "application/json"
+  }
+}
+
+// Teste 2: Feedback URGENTE (nota <= 2) - Simulando API Gateway
+{
+  "body": "{\"restaurante\":\"Restaurante Sabor\",\"nota\":1,\"comentario\":\"Péssimo atendimento e comida fria\",\"emailCliente\":\"insatisfeito@email.com\"}",
+  "httpMethod": "POST",
+  "headers": {
+    "Content-Type": "application/json"
+  }
+}
+
+// Teste 3: Feedback sem body (direto como objeto)
+{
+  "restaurante": "Churrascaria Gaúcha",
+  "nota": 5,
+  "comentario": "Excelente! Melhor churrasco da cidade",
+  "emailCliente": "feliz@email.com"
+}
+
+// Teste 4: Validação - Faltando nome do restaurante (deve retornar erro 400)
+{
+  "body": "{\"nota\":3,\"comentario\":\"Bom, mas caro\",\"emailCliente\":\"teste@email.com\"}",
+  "httpMethod": "POST",
+  "headers": {
+    "Content-Type": "application/json"
+  }
+}
+
+// Teste 5: Validação - Nota inválida (deve retornar erro 400)
+{
+  "body": "{\"restaurante\":\"Lanchonete Central\",\"nota\":6,\"comentario\":\"Teste\",\"emailCliente\":\"teste@email.com\"}",
+  "httpMethod": "POST",
+  "headers": {
+    "Content-Type": "application/json"
+  }
+}
+
+
+// ===================================================================
+// 2. LAMBDA: EnviarNotificacaoHandler (feedback-system-enviar-notificacao)
+// ===================================================================
+
+// Teste 1: Mensagem ÚNICA do SQS
+{
+  "Records": [
+    {
+      "messageId": "msg-001",
+      "receiptHandle": "receipt-001",
+      "body": "{\"avaliacaoId\":\"123e4567-e89b-12d3-a456-426614174000\",\"restaurante\":\"Pizzaria Bella\",\"nota\":1,\"comentario\":\"Pizza queimada e fria\",\"dataAvaliacao\":\"2026-01-07T10:30:00\"}",
+      "attributes": {
+        "ApproximateReceiveCount": "1",
+        "SentTimestamp": "1704627000000",
+        "SenderId": "AIDAIT2UOQQY3AUEKVGXU",
+        "ApproximateFirstReceiveTimestamp": "1704627000000"
+      },
+      "messageAttributes": {},
+      "md5OfBody": "test-md5-001",
+      "eventSource": "aws:sqs",
+      "eventSourceARN": "arn:aws:sqs:us-east-2:123456789012:notificacao-urgencia-queue",
+      "awsRegion": "us-east-2"
+    }
+  ]
+}
+
+// Teste 2: MÚLTIPLAS mensagens do SQS (batch)
+{
+  "Records": [
+    {
+      "messageId": "msg-002",
+      "receiptHandle": "receipt-002",
+      "body": "{\"avaliacaoId\":\"223e4567-e89b-12d3-a456-426614174001\",\"restaurante\":\"Restaurante Sabor\",\"nota\":2,\"comentario\":\"Atendimento péssimo\",\"dataAvaliacao\":\"2026-01-07T11:00:00\"}",
+      "attributes": {
+        "ApproximateReceiveCount": "1",
+        "SentTimestamp": "1704628800000",
+        "SenderId": "AIDAIT2UOQQY3AUEKVGXU",
+        "ApproximateFirstReceiveTimestamp": "1704628800000"
+      },
+      "messageAttributes": {},
+      "md5OfBody": "test-md5-002",
+      "eventSource": "aws:sqs",
+      "eventSourceARN": "arn:aws:sqs:us-east-2:123456789012:notificacao-urgencia-queue",
+      "awsRegion": "us-east-2"
+    },
+    {
+      "messageId": "msg-003",
+      "receiptHandle": "receipt-003",
+      "body": "{\"avaliacaoId\":\"323e4567-e89b-12d3-a456-426614174002\",\"restaurante\":\"Lanchonete Express\",\"nota\":1,\"comentario\":\"Comida estragada!\",\"dataAvaliacao\":\"2026-01-07T11:15:00\"}",
+      "attributes": {
+        "ApproximateReceiveCount": "1",
+        "SentTimestamp": "1704629700000",
+        "SenderId": "AIDAIT2UOQQY3AUEKVGXU",
+        "ApproximateFirstReceiveTimestamp": "1704629700000"
+      },
+      "messageAttributes": {},
+      "md5OfBody": "test-md5-003",
+      "eventSource": "aws:sqs",
+      "eventSourceARN": "arn:aws:sqs:us-east-2:123456789012:notificacao-urgencia-queue",
+      "awsRegion": "us-east-2"
+    }
+  ]
+}
+
+// Teste 3: Evento VAZIO (sem mensagens)
+{
+  "Records": []
+}
+
+
+// ===================================================================
+// 3. LAMBDA: GerarRelatorioHandler (feedback-system-gerar-relatorio)
+// ===================================================================
+
+// Teste 1: Evento do EventBridge (CloudWatch Events) - Agendamento Semanal
+{
+  "id": "cdc73f9d-aea9-11e3-9d5a-835b769c0d9c",
+  "detail-type": "Scheduled Event",
+  "source": "aws.events",
+  "account": "123456789012",
+  "time": "2026-01-08T10:00:00Z",
+  "region": "us-east-2",
+  "resources": [
+    "arn:aws:events:us-east-2:123456789012:rule/weekly-report-rule"
+  ],
+  "detail": {}
+}
+
+// Teste 2: Invocação Manual (sem evento - objeto vazio)
+{
+}
+
+// Teste 3: Teste Completo com informações detalhadas
+{
+  "id": "test-manual-invoke-001",
+  "detail-type": "Manual Test",
+  "source": "manual.test",
+  "account": "123456789012",
+  "time": "2026-01-08T14:30:00Z",
+  "region": "us-east-2",
+  "resources": [],
+  "detail": {
+    "test": true,
+    "description": "Teste manual do relatório semanal"
+  }
+}
+
+
+// ===================================================================
+// GUIA DE USO:
+// ===================================================================
+//
+// PARA LAMBDA 1 (ReceberFeedbackHandler):
+// - Use os testes 1, 2 ou 3 para feedback válido
+// - Use os testes 4 ou 5 para testar validações
+//
+// PARA LAMBDA 2 (EnviarNotificacaoHandler):
+// - Use o teste 1 para mensagem única
+// - Use o teste 2 para simular processamento em batch
+// - Use o teste 3 para testar comportamento sem mensagens
+//
+// PARA LAMBDA 3 (GerarRelatorioHandler):
+// - Use o teste 1 para simular agendamento do EventBridge
+// - Use o teste 2 para invocação manual simples
+// - Use o teste 3 para teste detalhado
+//
+// RESPOSTAS ESPERADAS:
+//
+// Lambda 1 (sucesso):
+// {
+//   "statusCode": 200,
+//   "body": "{\"id\":...,\"restaurante\":\"...\",\"nota\":...,\"comentario\":\"...\",\"dataAvaliacao\":\"...\",\"emailCliente\":\"...\"}",
+//   "headers": {...}
+// }
+//
+// Lambda 2 (sucesso):
+// {
+//   "statusCode": 200,
+//   "processadas": 1,
+//   "erros": 0,
+//   "message": "Processadas 1 mensagens com 0 erros"
+// }
+//
+// Lambda 3 (sucesso):
+// {
+//   "statusCode": 200,
+//   "body": "{\"periodo\":\"01/01/2026 a 08/01/2026\",\"totalAvaliacoes\":45,\"mediaNotas\":3.87,\"avaliacoesPorRestaurante\":{...},\"comentariosNegativos\":[...]}",
+//   "message": "Relatório gerado e enviado com sucesso"
+// }
+//
+// IMPORTANTE - CONFIGURAÇÃO DO SES:
+// ===================================================================
+// Antes de testar a Lambda 3 (GerarRelatorioHandler), você DEVE:
+//
+// 1. Acessar o console do Amazon SES
+// 2. Ir em "Verified identities"
+// 3. Verificar os seguintes emails:
+//    - Email do remetente (variável SES_FROM_EMAIL)
+//    - Email(s) do(s) destinatário(s) (variável SES_ADMIN_EMAILS)
+//
+// 4. Para verificar um email:
+//    - Clique em "Create identity"
+//    - Selecione "Email address"
+//    - Digite o email e clique em "Create identity"
+//    - Acesse o email e clique no link de verificação
+//
+// 5. Se estiver no SANDBOX mode:
+//    - Você só pode enviar emails para endereços verificados
+//    - Para produção, solicite "Request production access"
+//
+// 6. Configurar as variáveis de ambiente na Lambda:
+//    SES_FROM_EMAIL=noreply@seu-dominio.com
+//    SES_ADMIN_EMAILS=admin@seu-dominio.com,gerente@seu-dominio.com
+//
+// ===================================================================
+

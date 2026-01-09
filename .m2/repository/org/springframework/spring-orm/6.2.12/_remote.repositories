@@ -1,0 +1,6 @@
+#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
+#Mon Dec 15 15:36:30 BRT 2025
+spring-orm-6.2.12.jar>central=
+spring-orm-6.2.12-javadoc.jar>central=
+spring-orm-6.2.12.pom>central=
+spring-orm-6.2.12-sources.jar>central=
