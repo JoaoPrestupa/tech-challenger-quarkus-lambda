@@ -1,0 +1,13 @@
+
+CREATE TABLE IF NOT EXISTS avaliacao (
+    id BIGSERIAL PRIMARY KEY,
+    restaurante VARCHAR(255) NOT NULL,
+    nota INTEGER NOT NULL CHECK (nota >= 1 AND nota <= 5),
+    comentario TEXT,
+    email_cliente VARCHAR(255),
+    data_avaliacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+
